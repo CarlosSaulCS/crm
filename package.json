@@ -11,6 +11,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "ts-node ./prisma/seed.ts",
+    "db:migrate-prod": "prisma generate && prisma db push && npm run db:seed",
     "format": "prettier --write .",
     "test": "vitest run",
     "test:ui": "vitest",

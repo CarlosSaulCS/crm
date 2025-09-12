@@ -1,18 +1,12 @@
 {
-  "build": {
-    "env": {
-      "NEXT_PHASE": "production"
-    }
-  },
-  "env": {
-    "NEXTAUTH_URL": "@nextauth_url",
-    "NEXTAUTH_SECRET": "@nextauth_secret",
-    "DATABASE_URL": "@database_url",
-    "AUTH_SALT_ROUNDS": "12"
-  },
   "functions": {
     "app/api/**": {
       "maxDuration": 30
+    }
+  },
+  "build": {
+    "env": {
+      "SKIP_ENV_VALIDATION": "1"
     }
   }
 }
