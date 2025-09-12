@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String?
+  image     String?
+  roles     TeamMembership[]
+  ownedTeams Team[]   @relation("TeamOwner")
+  accounts  Account[]
+  sessions  Session[]
+  contacts  Contact[] @relation("ContactOwner")
+  companies Company[] @relation("CompanyOwner")
+  deals     Deal[]    @relation("DealOwner")
+  tasks     Task[]    @relation("TaskOwner")
+  notes     Note[]    @relation("NoteOwner")
+  activities Activity[] @relation("ActivityOwner")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+}
+
+model Team {
+  id          String           @id @default(cuid())
+  name        String
+  owner       User             @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId     String
+  memberships TeamMembership[]
+  companies   Company[]
+  contacts    Contact[]
+  pipelines   Pipeline[]
+  deals       Deal[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TeamMembership {
+  id      String @id @default(cuid())
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  team    Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId  String
+  role    String
+  @@unique([userId, teamId])
+}
+
+model Company {
+  id        String  @id @default(cuid())
+  name      String
+  domain    String?
+  owner     User?   @relation("CompanyOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId   String?
+  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId    String
+  contacts  Contact[]
+  deals     Deal[]
+  notes     Note[]
+  activities Activity[]
+  tasks      Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([teamId])
+  @@index([ownerId])
+}
+
+model Contact {
+  id         String  @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String? @unique
+  phone      String?
+  jobTitle   String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyId  String?
+  owner      User?    @relation("ContactOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId    String?
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId     String
+  deals      Deal[]
+  tasks      Task[]
+  notes      Note[]
+  activities Activity[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([teamId])
+  @@index([ownerId])
+  @@index([companyId])
+}
+
+model Pipeline {
+  id        String  @id @default(cuid())
+  name      String
+  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId    String
+  stages    Stage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([teamId])
+}
+
+model Stage {
+  id         String   @id @default(cuid())
+  name       String
+  order      Int
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  pipelineId String
+  deals      Deal[]
+  @@unique([pipelineId, order])
+}
+
+model Deal {
+  id         String   @id @default(cuid())
+  title      String
+  amount     Float    @default(0)
+  status     String   @default("OPEN")
+  closeDate  DateTime?
+  stage      Stage?   @relation(fields: [stageId], references: [id], onDelete: SetNull)
+  stageId    String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyId  String?
+  contact    Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactId  String?
+  owner      User?    @relation("DealOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId    String?
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId     String
+  activities Activity[]
+  tasks      Task[]
+  notes      Note[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([teamId])
+  @@index([ownerId])
+  @@index([companyId])
+  @@index([contactId])
+  @@index([stageId])
+}
+
+model Activity {
+  id         String   @id @default(cuid())
+  type       String
+  subject    String
+  dueAt      DateTime?
+  completedAt DateTime?
+  deal       Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  dealId     String?
+  contact    Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactId  String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyId  String?
+  owner      User?    @relation("ActivityOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([ownerId])
+  @@index([dealId])
+  @@index([contactId])
+  @@index([companyId])
+}
+
+model Task {
+  id         String   @id @default(cuid())
+  title      String
+  dueAt      DateTime?
+  completedAt DateTime?
+  owner      User?    @relation("TaskOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId    String?
+  contact    Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactId  String?
+  deal       Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  dealId     String?
+  company    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyId  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([ownerId])
+  @@index([dealId])
+  @@index([contactId])
+  @@index([companyId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  owner     User?    @relation("NoteOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId   String?
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactId String?
+  deal      Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  dealId    String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  companyId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([ownerId])
+  @@index([dealId])
+  @@index([contactId])
+  @@index([companyId])
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?  @map("refresh_token")
+  access_token      String?  @map("access_token")
+  expires_at        Int?     @map("expires_at")
+  token_type        String?  @map("token_type")
+  scope             String?
+  id_token          String?  @map("id_token")
+  session_state     String?  @map("session_state")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

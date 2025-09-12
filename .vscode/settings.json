@@ -1,0 +1,12 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.eol": "\n",
+  "tailwindCSS.experimental.classRegex": [
+    ["cva", "\\([\\s\\S]*?variants:[\\s\\S]*?\\)"],
+    ["cn", "`([\\s\\S]*?)`"]
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  }
+}
