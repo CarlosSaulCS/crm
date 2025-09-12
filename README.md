@@ -1,21 +1,29 @@
 ## CRM — Modern Next.js App
 
-A professional, elegant CRM built with Next.js 14 App Router, TypeScript, Tailwind CSS v4, Prisma + PostgreSQL, NextAuth, Zod, React Query, React Hook Form, and Zustand.
+A professional, elegant CRM built with Next.js 15 App Router, TypeScript, Tailwind CSS, Prisma + PostgreSQL, NextAuth, Zod, React Query, React Hook Form, and Zustand.
+
+## 🚀 Features
+
+- **Dashboard Profesional**: Gráficos avanzados con Recharts, KPIs en tiempo real
+- **Gestión Avanzada de Datos**: Búsqueda, filtrado, paginación, exportación CSV
+- **Módulos CRM Completos**: Contactos, Empresas, Deals, Tareas con interfaces profesionales
+- **Responsive Design**: Optimizado para móviles y desktop
 
 ## Stack
 
-- Next.js 14 (App Router) + TypeScript
-- Tailwind CSS v4
+- Next.js 15 (App Router) + TypeScript
+- Tailwind CSS + shadcn/ui
 - Prisma ORM + PostgreSQL
 - NextAuth (JWT sessions, credentials provider)
 - Zod, React Query, React Hook Form, Zustand
+- Recharts para visualizaciones
 
 ## Prerequisites
 
 - Node.js 18+
-- Docker Desktop (for PostgreSQL) or an external Postgres instance
+- PostgreSQL instance (local o cloud)
 
-## Setup
+## 🛠️ Setup Local
 
 1. Copy environment variables and adjust values:
 
@@ -23,23 +31,26 @@ A professional, elegant CRM built with Next.js 14 App Router, TypeScript, Tailwi
 cp .env.example .env
 ```
 
-2. Start PostgreSQL (if you have Docker):
+2. Configure your PostgreSQL database in `.env`:
 
 ```bash
-docker compose up -d db
+# For local development with Docker
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/crm?schema=public
+
+# Or use your PostgreSQL instance
+DATABASE_URL=postgresql://username:password@host:port/database
 ```
 
-Alternatively, point `DATABASE_URL` in `.env` to your Postgres instance.
-
-3. Generate Prisma client:
+3. Install dependencies:
 
 ```bash
-npm run postinstall
+npm install
 ```
 
-4. Push schema and seed data:
+4. Generate Prisma client and push schema:
 
 ```bash
+npx prisma generate
 npx prisma db push
 npm run db:seed
 ```
@@ -48,6 +59,45 @@ npm run db:seed
 
 ```bash
 npm run dev
+```
+
+## 🌐 Deployment on Vercel
+
+### 1. Configure Database
+
+**Option A: Vercel Postgres (Recommended)**
+
+1. Go to your Vercel project dashboard
+2. Navigate to "Storage" tab
+3. Create a new "Postgres Database"
+4. Copy the `DATABASE_URL` provided
+
+**Option B: External PostgreSQL**
+
+- Use Supabase, Railway, or any PostgreSQL provider
+- Get the connection string
+
+### 2. Set Environment Variables in Vercel
+
+Add these variables in your Vercel project settings:
+
+```bash
+NEXTAUTH_URL=https://your-app.vercel.app
+NEXTAUTH_SECRET=your-strong-secret-key
+DATABASE_URL=your-postgresql-connection-string
+AUTH_SALT_ROUNDS=12
+```
+
+### 3. Deploy
+
+```bash
+git add .
+git commit -m "feat: Configure PostgreSQL for production"
+git push
+```
+
+Vercel will automatically deploy when you push to your main branch.
+
 ```
 
 Open http://localhost:3000
@@ -77,3 +127,4 @@ Seeded login: `admin@acme.com` / `admin123`
 
 - Tailwind CSS v4 is enabled via PostCSS integration and `@import "tailwindcss";` in `app/globals.css`.
 - Authentication protects everything except `/login` and `/api/auth/*` (see `middleware.ts`).
+```
