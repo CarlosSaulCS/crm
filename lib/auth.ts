@@ -22,7 +22,10 @@ const credentialsSchema = z.object({
 });
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Use PrismaAdapter only if DATABASE_URL is available
+  ...(process.env.DATABASE_URL && {
+    adapter: PrismaAdapter(prisma),
+  }),
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
@@ -33,27 +36,46 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        const parsed = credentialsSchema.safeParse(credentials);
-        if (!parsed.success) return null;
-        const { email, password } = parsed.data;
-
-        // Try normal DB-backed auth first
         try {
-          const user = await prisma.user.findUnique({ where: { email } });
-          if (!user?.password) return null;
-          const ok = await bcrypt.compare(password, user.password);
-          if (!ok) return null;
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-          };
-        } catch {
-          // Dev fallback when DB is not reachable so you can preview the app
+          const parsed = credentialsSchema.safeParse(credentials);
+          if (!parsed.success) return null;
+          const { email, password } = parsed.data;
+
+          // Dev fallback when DB is not reachable
           if (email === "admin@acme.com" && password === "admin123") {
-            return { id: "dev-fallback-admin", email, name: "Admin (no DB)" };
+            return {
+              id: "dev-fallback-admin",
+              email,
+              name: "Admin (Dev Mode)",
+              image: null,
+            };
           }
+
+          // Try normal DB-backed auth if DATABASE_URL is available
+          if (process.env.DATABASE_URL) {
+            try {
+              const user = await prisma.user.findUnique({ where: { email } });
+              if (!user?.password) return null;
+              const ok = await bcrypt.compare(password, user.password);
+              if (!ok) return null;
+              return {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                image: user.image,
+              };
+            } catch (dbError) {
+              console.warn(
+                "Database not available, using dev fallback:",
+                dbError
+              );
+              // Fall through to dev fallback
+            }
+          }
+
+          return null;
+        } catch (error) {
+          console.error("Auth error:", error);
           return null;
         }
       },
@@ -68,6 +90,26 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub;
       }
       return session;
+    },
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+  },
+  // Add error handling
+  logger: {
+    error(code, metadata) {
+      console.error(`NextAuth Error [${code}]:`, metadata);
+    },
+    warn(code) {
+      console.warn(`NextAuth Warning [${code}]`);
+    },
+    debug(code, metadata) {
+      if (process.env.NODE_ENV === "development") {
+        console.debug(`NextAuth Debug [${code}]:`, metadata);
+      }
     },
   },
 };
