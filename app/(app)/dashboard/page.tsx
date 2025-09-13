@@ -193,6 +193,8 @@ const ChartCard = ({
 );
 
 export default function DashboardPage() {
+  const [currentTime, setCurrentTime] = useState("");
+  const [isClient, setIsClient] = useState(false);
   const [data, setData] = useState<DashboardData>({
     contacts: 0,
     companies: 0,
@@ -245,7 +247,7 @@ export default function DashboardPage() {
           fetch("/api/companies"),
           fetch("/api/deals"),
           fetch("/api/tasks"),
-        ],
+        ]
       );
 
       const contactsData = await contactsRes.json();
@@ -268,33 +270,33 @@ export default function DashboardPage() {
 
       const recentContacts = contactsArray.filter(
         (contact: { createdAt: string }) =>
-          new Date(contact.createdAt) > lastWeek,
+          new Date(contact.createdAt) > lastWeek
       ).length;
 
       const recentCompanies = companiesArray.filter(
         (company: { createdAt: string }) =>
-          new Date(company.createdAt) > lastWeek,
+          new Date(company.createdAt) > lastWeek
       ).length;
 
       const recentDeals = dealsArray.filter(
-        (deal: { createdAt: string }) => new Date(deal.createdAt) > lastWeek,
+        (deal: { createdAt: string }) => new Date(deal.createdAt) > lastWeek
       ).length;
 
       const totalValue = dealsArray.reduce(
         (sum: number, deal: { amount: number }) => sum + (deal.amount || 0),
-        0,
+        0
       );
 
       const avgDealValue =
         dealsArray.length > 0 ? totalValue / dealsArray.length : 0;
 
       const completedTasks = tasksArray.filter(
-        (task: { completedAt: string | null }) => task.completedAt,
+        (task: { completedAt: string | null }) => task.completedAt
       ).length;
 
       const overdueTasks = tasksArray.filter(
         (task: { dueAt: string; completedAt: string | null }) =>
-          !task.completedAt && new Date(task.dueAt) < now,
+          !task.completedAt && new Date(task.dueAt) < now
       ).length;
 
       setData({
@@ -325,6 +327,19 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
+  // Handle hydration for client-side time rendering
+  useEffect(() => {
+    setIsClient(true);
+    setCurrentTime(new Date().toLocaleTimeString());
+
+    // Update time every minute
+    const interval = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50/50">
       <div className="p-8">
@@ -342,7 +357,7 @@ export default function DashboardPage() {
               <div className="text-right">
                 <p className="text-sm text-gray-500">Last updated</p>
                 <p className="text-sm font-medium text-gray-900">
-                  {new Date().toLocaleTimeString()}
+                  {isClient ? currentTime : "--:--:--"}
                 </p>
               </div>
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
